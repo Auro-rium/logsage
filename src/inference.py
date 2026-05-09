@@ -2,7 +2,7 @@ import argparse
 
 from unsloth import FastLanguageModel
 
-from logsage_data import build_chat_prompt
+from src.data import build_chat_prompt
 
 
 DEFAULT_BASE_MODEL = "unsloth/Qwen2.5-7B-Instruct-bnb-4bit"

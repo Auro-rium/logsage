@@ -33,8 +33,8 @@
 
 ## Graph
 
-- Metrics plot: [training_metrics.svg](/home/lenovo/Documents/logsage/training_metrics.svg)
-- Tabular curve export: [training_curves.csv](/home/lenovo/Documents/logsage/training_curves.csv)
+- Metrics plot: [training_metrics.svg](../results/training_metrics.svg)
+- Tabular curve export: [training_curves.csv](../results/training_curves.csv)
 
 The graph contains:
 
@@ -44,13 +44,11 @@ The graph contains:
 
 ## Raw Artifacts
 
-- Metrics stream: [training_metrics.jsonl](/home/lenovo/Documents/logsage/training_metrics.jsonl)
-- Final metrics summary: [training_summary.json](/home/lenovo/Documents/logsage/training_summary.json)
-- Eval generations: [training_eval_outputs.jsonl](/home/lenovo/Documents/logsage/training_eval_outputs.jsonl)
-- Trainer log: [training_train.log](/home/lenovo/Documents/logsage/training_train.log)
-- TensorBoard event files:
-  - [events.out.tfevents.1778338325.ip-172-31-85-69.4323.0](/home/lenovo/Documents/logsage/training_tensorboard/events.out.tfevents.1778338325.ip-172-31-85-69.4323.0)
-  - [events.out.tfevents.1778340405.ip-172-31-85-69.4323.1](/home/lenovo/Documents/logsage/training_tensorboard/events.out.tfevents.1778340405.ip-172-31-85-69.4323.1)
+- Metrics stream: [training_metrics.jsonl](../results/training_metrics.jsonl)
+- Final metrics summary: [training_summary.json](../results/training_summary.json)
+- Eval generations: [training_eval_outputs.jsonl](../results/training_eval_outputs.jsonl)
+- Trainer log: [training_train.log](../results/training_train.log)
+- TensorBoard event files: [`results/tensorboard/`](../results/tensorboard/)
 
 ## Local Backups
 

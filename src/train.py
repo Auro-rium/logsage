@@ -12,7 +12,7 @@ from pathlib import Path
 import torch
 from datasets import Dataset
 
-from logsage_data import build_chat_prompt, dataset_stats, format_training_text, load_and_validate_jsonl
+from src.data import build_chat_prompt, dataset_stats, format_training_text, load_and_validate_jsonl
 
 
 DEFAULT_MODEL_NAME = "unsloth/Qwen2.5-7B-Instruct-bnb-4bit"
@@ -46,7 +46,7 @@ def build_metrics_recorder_class(trainer_callback_cls):
 def parse_args():
     parser = argparse.ArgumentParser(description="Fine-tune LogSage with QLoRA.")
     parser.add_argument("--model-name", default=DEFAULT_MODEL_NAME)
-    parser.add_argument("--data-path", default="logs_dataset.jsonl")
+    parser.add_argument("--data-path", default="data/logs_dataset.jsonl")
     parser.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--run-dir", default=None)
     parser.add_argument("--run-id", default=None)

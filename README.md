@@ -30,7 +30,7 @@ LogSage is a QLoRA fine-tuned LLM adapter built on **Qwen2.5-7B-Instruct** that 
 
 ### Training Curves
 
-![Training metrics — loss, learning rate, gradient norm](training_metrics.svg)
+![Training metrics — loss, learning rate, gradient norm](results/training_metrics.svg)
 
 ## 🚀 Quick Start
 
@@ -42,7 +42,7 @@ LogSage is a QLoRA fine-tuned LLM adapter built on **Qwen2.5-7B-Instruct** that 
 ### Installation
 
 ```bash
-git clone https://github.com/auro-rirum/logsage.git
+git clone https://github.com/Auro-rium/logsage.git
 cd logsage
 python -m venv venv
 source venv/bin/activate
@@ -52,7 +52,7 @@ pip install -r requirements.txt
 ### Inference
 
 ```bash
-python test_logsage.py \
+python -m src.inference \
   --base-model unsloth/Qwen2.5-7B-Instruct-bnb-4bit \
   --adapter-dir LogSage-Qwen2.5-7B-QLoRA-v0
 ```
@@ -60,7 +60,7 @@ python test_logsage.py \
 Or with custom logs:
 
 ```bash
-python test_logsage.py --logs "2026-03-21T18:44:55Z ERROR api checkout failed
+python -m src.inference --logs "2026-03-21T18:44:55Z ERROR api checkout failed
 Error: SASL: SCRAM-SERVER-FINAL-MESSAGE: server signature is missing
 DB_HOST=db.internal sslmode=disable
 note=RDS instance was switched to require SSL this morning"
@@ -69,8 +69,8 @@ note=RDS instance was switched to require SSL this morning"
 ### Training
 
 ```bash
-python train_logsage.py \
-  --data-path logs_dataset.jsonl \
+python -m src.train \
+  --data-path data/logs_dataset.jsonl \
   --epochs 3 \
   --train-batch-size 2 \
   --gradient-accumulation-steps 4 \
@@ -79,10 +79,16 @@ python train_logsage.py \
 
 > **Note:** Training requires a CUDA GPU. The original run used an AWS EC2 `g5.2xlarge` instance.
 
+### Dataset Validation
+
+```bash
+python scripts/validate_dataset.py --data-path data/logs_dataset.jsonl
+```
+
 ### TensorBoard
 
 ```bash
-tensorboard --logdir training_tensorboard --port 6006
+tensorboard --logdir results/tensorboard --port 6006
 ```
 
 Then open [http://localhost:6006](http://localhost:6006) in your browser.
@@ -119,23 +125,39 @@ Logs:
 
 ```
 logsage/
-├── train_logsage.py          # Full training pipeline with QLoRA
-├── test_logsage.py            # Inference script with adapter loading
-├── logsage_data.py            # Data loading, validation, and prompt formatting
-├── validate_dataset.py        # Dataset validation utility
-├── logs_dataset.jsonl         # Training dataset (1,116 rows)
-├── requirements.txt           # Python dependencies
-├── training_tensorboard/      # TensorBoard event files
-├── training_metrics.jsonl     # Step-by-step metrics stream
-├── training_metrics.svg       # Training curves plot
-├── training_curves.csv        # Tabular curve export
-├── training_summary.json      # Final metrics summary
-├── training_eval_outputs.jsonl # Sample eval generations
-├── training_train.log         # Full training console log
-├── assets/                    # Screenshots and images
-│   └── tensorboard_eval.png   # TensorBoard evaluation dashboard
-├── TRAINING_RUN_REPORT.md     # Detailed training run report
-└── AWS_EC2_RUNBOOK.md         # EC2 deployment runbook
+├── README.md
+├── requirements.txt
+├── .gitignore
+│
+├── src/                              # Python source code
+│   ├── __init__.py
+│   ├── data.py                       # Data loading, validation & prompt formatting
+│   ├── train.py                      # Full QLoRA training pipeline
+│   └── inference.py                  # Adapter inference script
+│
+├── scripts/                          # Utility scripts
+│   ├── validate_dataset.py           # Dataset validation CLI
+│   ├── aws_preflight.sh              # EC2 preflight checks
+│   └── ec2_train.sh                  # EC2 training launcher
+│
+├── data/                             # Datasets
+│   └── logs_dataset.jsonl            # 1,116 training rows
+│
+├── results/                          # Training artifacts
+│   ├── training_curves.csv           # Tabular curve export
+│   ├── training_metrics.jsonl        # Step-by-step metrics stream
+│   ├── training_metrics.svg          # Loss/LR/grad norm plots
+│   ├── training_summary.json         # Final metrics summary
+│   ├── training_eval_outputs.jsonl   # Sample eval generations
+│   ├── training_train.log            # Full console log
+│   └── tensorboard/                  # TensorBoard event files
+│
+├── docs/                             # Documentation
+│   ├── TRAINING_RUN_REPORT.md        # Detailed training run report
+│   └── AWS_EC2_RUNBOOK.md            # EC2 deployment runbook
+│
+└── assets/                           # Images
+    └── tensorboard_eval.png          # TensorBoard eval dashboard
 ```
 
 ## 🔧 Loading the Adapter (Python API)
