@@ -1,0 +1,9 @@
+unsloth
+transformers
+datasets
+trl
+peft
+accelerate
+bitsandbytes
+huggingface_hub
+tensorboard

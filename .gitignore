@@ -1,0 +1,34 @@
+# Virtual environment
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Training outputs
+outputs/
+checkpoints/
+runs/
+LogSage-Qwen2.5-7B-QLoRA-v0/
+LogSage-smoke-output/
+
+# Jupyter
+*.ipynb_checkpoints
+.ipynb_checkpoints/
+
+# Secrets
+*.pem
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
