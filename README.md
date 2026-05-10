@@ -57,6 +57,105 @@ python -m src.inference \
   --adapter-dir LogSage-Qwen2.5-7B-QLoRA-v0
 ```
 
+### Google Colab / PEFT Loading
+
+Notebook in this repo:
+
+- `LogSage_Inference_Colab.ipynb`
+
+Minimal install:
+
+```python
+!pip install -U "bitsandbytes>=0.46.1" accelerate peft transformers
+```
+
+Basic adapter load:
+
+```python
+from peft import PeftModel
+from transformers import AutoModelForCausalLM
+
+base_model = AutoModelForCausalLM.from_pretrained("unsloth/Qwen2.5-7B-Instruct-bnb-4bit")
+model = PeftModel.from_pretrained(base_model, "auro-rirum/LogSage-Qwen2.5-7B-QLoRA-v0")
+```
+
+Recommended 4-bit load:
+
+```python
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+from peft import PeftModel
+
+base_model_id = "unsloth/Qwen2.5-7B-Instruct-bnb-4bit"
+adapter_id = "auro-rirum/LogSage-Qwen2.5-7B-QLoRA-v0"
+
+tokenizer = AutoTokenizer.from_pretrained(base_model_id, trust_remote_code=True)
+
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_compute_dtype=torch.float16,
+    bnb_4bit_use_double_quant=True,
+)
+
+base_model = AutoModelForCausalLM.from_pretrained(
+    base_model_id,
+    quantization_config=bnb_config,
+    device_map="auto",
+    trust_remote_code=True,
+)
+
+model = PeftModel.from_pretrained(
+    base_model,
+    adapter_id,
+)
+
+model.eval()
+```
+
+GPU check:
+
+```python
+import torch
+print(torch.cuda.is_available())
+print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else "No GPU")
+```
+
+Chat-style inference example:
+
+```python
+messages = [
+    {
+        "role": "system",
+        "content": "You are LogSage, a log-analysis assistant. Return only valid JSON with these keys: issue, root_cause, severity, fix, confidence."
+    },
+    {
+        "role": "user",
+        "content": """Analyze this log and return only the JSON diagnosis:
+
+{"level": "error", "component": "database", "message": "Connection attempt failed", "details": "psycopg2.connection: host=db.internal port=5432 timeout=10s"}"""
+    }
+]
+
+prompt = tokenizer.apply_chat_template(
+    messages,
+    tokenize=False,
+    add_generation_prompt=True
+)
+
+inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+
+outputs = model.generate(
+    **inputs,
+    max_new_tokens=250,
+    do_sample=False,
+    pad_token_id=tokenizer.eos_token_id
+)
+
+generated = outputs[0][inputs["input_ids"].shape[-1]:]
+print(tokenizer.decode(generated, skip_special_tokens=True))
+```
+
 Or with custom logs:
 
 ```bash
@@ -126,6 +225,7 @@ Logs:
 ```
 logsage/
 ├── README.md
+├── LogSage_Inference_Colab.ipynb
 ├── requirements.txt
 ├── .gitignore
 │
