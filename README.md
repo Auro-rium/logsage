@@ -2,12 +2,65 @@
 
 LogSage is a QLoRA fine-tuned LLM adapter built on **Qwen2.5-7B-Instruct** that analyzes application logs and returns structured JSON incident summaries — identifying the issue, root cause, severity, recommended fix, and confidence score.
 
+> Learning-grade fine-tuning project covering dataset design, QLoRA training, AWS GPU execution, observability, Hugging Face publishing, and adapter inference.
+
+## Project Links
+
+- Hugging Face model: https://huggingface.co/auro-rirum/LogSage-Qwen2.5-7B-QLoRA-v0
+- Colab inference notebook: [LogSage_Inference_Colab.ipynb](LogSage_Inference_Colab.ipynb)
+- Training report: [docs/TRAINING_RUN_REPORT.md](docs/TRAINING_RUN_REPORT.md)
+- AWS runbook: [docs/AWS_EC2_RUNBOOK.md](docs/AWS_EC2_RUNBOOK.md)
+- Interview guide: [docs/INTERVIEW_GUIDE.md](docs/INTERVIEW_GUIDE.md)
+
 ## ✨ Features
 
 - **Structured incident analysis** — Returns valid JSON with `issue`, `root_cause`, `severity`, `fix`, and `confidence` keys
 - **QLoRA fine-tuned** — 4-bit quantized adapter for efficient GPU inference
 - **1,116 curated training samples** — Covering `low`, `medium`, and `high` severity incidents
 - **Full observability pipeline** — TensorBoard, metrics JSONL, training curves, and eval outputs
+
+## What This Demonstrates
+
+- Built a supervised instruction dataset for log triage with a fixed JSON schema.
+- Fine-tuned a 7B instruction model using QLoRA instead of full-parameter training.
+- Ran the training workflow on real AWS GPU infrastructure with cost guardrails.
+- Logged training/eval metrics, checkpoints, TensorBoard artifacts, and final reports.
+- Published the adapter to Hugging Face and documented Colab-based inference.
+- Added structured post-processing so raw model text becomes validated JSON.
+
+## Architecture
+
+```text
+logs_dataset.jsonl
+        |
+        v
+dataset validation + confidence/severity normalization
+        |
+        v
+ChatML prompt formatting for Qwen2.5-Instruct
+        |
+        v
+QLoRA fine-tuning on AWS g5.2xlarge / NVIDIA A10G
+        |
+        v
+LoRA adapter + tokenizer + metrics + training report
+        |
+        v
+Hugging Face adapter repo + Colab/local inference
+        |
+        v
+JSON extraction + schema validation
+```
+
+## Reviewer Snapshot
+
+If you are reviewing this as an internship project, start here:
+
+- [src/train.py](src/train.py) — full QLoRA training pipeline with eval, checkpointing, and reporting.
+- [src/data.py](src/data.py) — dataset validation, normalization, and ChatML formatting.
+- [src/inference.py](src/inference.py) — adapter inference with JSON extraction and schema validation.
+- [docs/TRAINING_RUN_REPORT.md](docs/TRAINING_RUN_REPORT.md) — final metrics and training curve interpretation.
+- [LogSage_Inference_Colab.ipynb](LogSage_Inference_Colab.ipynb) — reproducible adapter inference in Colab.
 
 ## 📊 Training Results
 
