@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="LogSage is a QLoRA fine-tuning project for structured log analysis, trained on AWS and published as a Hugging Face adapter."
+    />
+    <meta name="theme-color" content="#f5f3ed" />
+    <title>LogSage | From Logs to a Structured Diagnosis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="LogSage home">
+        <span class="brand-mark">LS</span>
+        <span>LogSage</span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="#chronology">Chronology</a>
+        <a href="#training">Training</a>
+        <a href="#inference">Inference</a>
+      </nav>
+      <a class="header-link" href="https://github.com/Auro-rium/logsage" target="_blank" rel="noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <img class="hero-chart" src="assets/training_metrics.svg" alt="Actual LogSage training metrics chart" />
+        <div class="hero-shade"></div>
+        <div class="hero-content">
+          <p class="eyebrow">A learning-grade fine-tuning project</p>
+          <h1 id="hero-title">A noisy incident is not a diagnosis.</h1>
+          <p class="hero-copy">
+            LogSage turns raw application logs into a structured first-pass hypothesis: what failed, why it likely failed, how serious it is, and what to inspect next.
+          </p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="#chronology">Read the build story <span aria-hidden="true">↓</span></a>
+            <a class="button button-secondary" href="https://huggingface.co/auro-rirum/LogSage-Qwen2.5-7B-QLoRA-v0" target="_blank" rel="noreferrer">View the adapter <span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+        <div class="hero-caption">Actual training curve · 378 steps · QLoRA on NVIDIA A10G</div>
+      </section>
+
+      <section class="signal-strip" aria-label="Project summary">
+        <div><span>01</span><strong>1,116</strong><small>structured log-triage examples</small></div>
+        <div><span>02</span><strong>7B</strong><small>Qwen2.5 instruction base model</small></div>
+        <div><span>03</span><strong>34.3m</strong><small>full AWS GPU training runtime</small></div>
+        <div><span>04</span><strong>0.789</strong><small>best eval loss at step 250</small></div>
+      </section>
+
+      <section class="intro section" id="chronology" aria-labelledby="chronology-title">
+        <div class="section-kicker">The chronology</div>
+        <div class="intro-grid">
+          <h2 id="chronology-title">A focused model, built as a full engineering workflow.</h2>
+          <p>
+            The point was never to make a generic chat assistant. The point was to take an incident-shaped input, teach a model a stable response contract, run the training on real hardware, measure it, and leave behind artifacts another engineer can inspect.
+          </p>
+        </div>
+      </section>
+
+      <section class="timeline section" aria-label="LogSage project timeline">
+        <article class="timeline-item">
+          <div class="timeline-index">01</div>
+          <div>
+            <p class="eyebrow">Dataset discipline</p>
+            <h3>Start with a contract, not a prompt.</h3>
+            <p>
+              Each training row paired an instruction and raw log context with a required response shape: <code>issue</code>, <code>root_cause</code>, <code>severity</code>, <code>fix</code>, and <code>confidence</code>. Validation normalized severity labels and confidence percentages before training began.
+            </p>
+          </div>
+          <div class="timeline-fact"><strong>1,116</strong><span>validated examples</span></div>
+        </article>
+
+        <article class="timeline-item">
+          <div class="timeline-index">02</div>
+          <div>
+            <p class="eyebrow">Prompting for the model</p>
+            <h3>Format the task as a Qwen conversation.</h3>
+            <p>
+              The dataset was converted into ChatML-style system, user, and assistant turns. That gives Qwen a consistent role structure while keeping the final answer anchored to a JSON-style incident diagnosis.
+            </p>
+          </div>
+          <div class="timeline-fact"><strong>5</strong><span>required response fields</span></div>
+        </article>
+
+        <article class="timeline-item">
+          <div class="timeline-index">03</div>
+          <div>
+            <p class="eyebrow">Cloud execution</p>
+            <h3>Use QLoRA to fit the project on one GPU.</h3>
+            <p>
+              Instead of updating every parameter in the 7B base model, the run trained low-rank adapter weights on a 4-bit quantized base. That made the experiment practical on a single AWS <code>g5.2xlarge</code> with an NVIDIA A10G GPU.
+            </p>
+          </div>
+          <div class="timeline-fact"><strong>24 GB</strong><span>A10G VRAM</span></div>
+        </article>
+
+        <article class="timeline-item">
+          <div class="timeline-index">04</div>
+          <div>
+            <p class="eyebrow">Observability</p>
+            <h3>Watch the curve, not just the final number.</h3>
+            <p>
+              Training logged checkpoints, JSONL metrics, TensorBoard events, evaluation generations, and a report. The goal was to make the learning behavior inspectable rather than treating the training command as a black box.
+            </p>
+          </div>
+          <div class="timeline-fact"><strong>378</strong><span>optimization steps</span></div>
+        </article>
+
+        <article class="timeline-item">
+          <div class="timeline-index">05</div>
+          <div>
+            <p class="eyebrow">Artifact handoff</p>
+            <h3>Publish the adapter, keep the base separate.</h3>
+            <p>
+              The final PEFT adapter, tokenizer, evaluation outputs, and model card were published to Hugging Face. Colab and local inference load the base model first, then attach the adapter.
+            </p>
+          </div>
+          <div class="timeline-fact"><strong>PEFT</strong><span>adapter publishing</span></div>
+        </article>
+
+        <article class="timeline-item timeline-final">
+          <div class="timeline-index">06</div>
+          <div>
+            <p class="eyebrow">Cost control</p>
+            <h3>Back up the run, then stop the meter.</h3>
+            <p>
+              Final artifacts were pulled down locally before the training instance was terminated. The project deliberately used an eight-hour termination guard and cleanup checks for leftover EBS volumes.
+            </p>
+          </div>
+          <div class="timeline-fact"><strong>0</strong><span>leftover GPU instances</span></div>
+        </article>
+      </section>
+
+      <section class="training section" id="training" aria-labelledby="training-title">
+        <div class="training-heading">
+          <div>
+            <p class="section-kicker">What the run said</p>
+            <h2 id="training-title">The loss fell fast, then the signal leveled out.</h2>
+          </div>
+          <p>
+            This is the useful part of the graph: a lower train loss alone is not enough. The eval curve improved through the middle of the run, reached its best point at step 250, and stayed roughly flat after that.
+          </p>
+        </div>
+        <figure class="metrics-figure">
+          <img src="assets/training_metrics.svg" alt="LogSage train loss, eval loss, learning rate, and gradient norm" />
+          <figcaption>
+            Training loss dropped from roughly 2.15 to 0.53 at its lowest logged point. Best eval loss: <strong>0.789</strong> at step <strong>250</strong>. Final eval loss: <strong>0.811</strong>.
+          </figcaption>
+        </figure>
+        <div class="metric-notes">
+          <article><span>Train / eval split</span><strong>1,004 / 112</strong></article>
+          <article><span>Epochs</span><strong>3</strong></article>
+          <article><span>Effective batch size</span><strong>8</strong></article>
+          <article><span>Sequence length</span><strong>2,048</strong></article>
+        </div>
+      </section>
+
+      <section class="observability section" aria-labelledby="obs-title">
+        <div class="obs-copy">
+          <p class="section-kicker">Real observability</p>
+          <h2 id="obs-title">A training job should leave evidence behind.</h2>
+          <p>
+            The TensorBoard run captured the same questions an engineer asks when a model begins to learn: Is loss moving? Is evaluation holding steady? Are there signs of instability? Is the job actually using the GPU we paid for?
+          </p>
+          <ul>
+            <li>Console and file logs for execution traceability</li>
+            <li>Metrics JSONL for programmatic analysis</li>
+            <li>Checkpointing every 25 steps for recovery</li>
+            <li>Sample generations for qualitative inspection</li>
+          </ul>
+        </div>
+        <figure class="tensorboard-figure">
+          <img src="assets/tensorboard_eval.png" alt="TensorBoard screenshot showing LogSage evaluation metrics" />
+          <figcaption>Evaluation view captured during the LogSage run.</figcaption>
+        </figure>
+      </section>
+
+      <section class="inference section" id="inference" aria-labelledby="inference-title">
+        <div class="inference-heading">
+          <p class="section-kicker">How it is used</p>
+          <h2 id="inference-title">Base model + adapter + a strict response contract.</h2>
+        </div>
+        <div class="inference-grid">
+          <div class="code-panel" aria-label="Inference flow">
+            <div class="code-top"><span></span><span></span><span></span><code>inference.py</code></div>
+            <pre><code><span class="code-muted"># 1. Load the 4-bit Qwen base</span>
+base = load(<span class="code-string">"Qwen2.5-7B-Instruct"</span>)
+
+<span class="code-muted"># 2. Attach LogSage LoRA weights</span>
+model = attach_adapter(base, <span class="code-string">"LogSage-Qwen2.5"</span>)
+
+<span class="code-muted"># 3. Give it logs + context</span>
+raw = model.generate(chat_prompt(logs))
+
+<span class="code-muted"># 4. Extract and validate structured JSON</span>
+diagnosis = validate(extract_json(raw))</code></pre>
+          </div>
+          <div class="inference-copy">
+            <h3>Why the JSON layer matters</h3>
+            <p>
+              Language models can echo prompts or wrap an otherwise useful answer in commentary. The inference path extracts the assistant JSON, checks required keys, normalizes severity, and ensures confidence is consistently represented.
+            </p>
+            <dl>
+              <div><dt>Input</dt><dd>Raw logs plus incident context</dd></div>
+              <div><dt>Output</dt><dd>Issue, root cause, severity, fix, confidence</dd></div>
+              <div><dt>Runtime</dt><dd>Colab, local NVIDIA GPU, or a hosted adapter-aware service</dd></div>
+            </dl>
+            <a class="text-link" href="https://huggingface.co/auro-rirum/LogSage-Qwen2.5-7B-QLoRA-v0" target="_blank" rel="noreferrer">Open the Hugging Face model card <span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+      </section>
+
+      <section class="limits section" aria-labelledby="limits-title">
+        <div>
+          <p class="section-kicker">The honest boundary</p>
+          <h2 id="limits-title">Useful as an assistant, not an authority.</h2>
+        </div>
+        <div class="limits-list">
+          <p>LogSage is a small, focused v0 adapter. It can form a useful first hypothesis, but it can also hallucinate root causes, miss cross-service context, or sound more certain than the evidence supports.</p>
+          <p>Real operational use needs redaction, PII handling, source-aware context, calibrated confidence, human review, and audit logging around the model.</p>
+        </div>
+      </section>
+
+      <section class="closing section" aria-labelledby="closing-title">
+        <p class="section-kicker">The takeaway</p>
+        <h2 id="closing-title">The model is small. The workflow is the project.</h2>
+        <p>
+          LogSage is an applied LLM engineering story from data contract to cloud GPU to published adapter. The interesting part is not only that it can summarize a failure. It is that the training, measurement, cost controls, and handoff can all be traced.
+        </p>
+        <div class="closing-actions">
+          <a class="button button-primary" href="https://github.com/Auro-rium/logsage" target="_blank" rel="noreferrer">Explore the code <span aria-hidden="true">↗</span></a>
+          <a class="button button-secondary" href="https://huggingface.co/auro-rirum/LogSage-Qwen2.5-7B-QLoRA-v0" target="_blank" rel="noreferrer">Explore the model <span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>LogSage · applied fine-tuning for incident triage</span>
+      <span>Built by Aurorium Nexus</span>
+    </footer>
+  </body>
+</html>
