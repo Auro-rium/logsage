@@ -13,6 +13,7 @@ import torch
 from datasets import Dataset
 
 from src.data import build_chat_prompt, dataset_stats, format_training_text, load_and_validate_jsonl
+from src.splits import dataset_fingerprint, split_rows
 
 
 DEFAULT_MODEL_NAME = "unsloth/Qwen2.5-7B-Instruct-bnb-4bit"
@@ -57,6 +58,7 @@ def parse_args():
     parser.add_argument("--learning-rate", type=float, default=2e-4)
     parser.add_argument("--warmup-steps", type=int, default=10)
     parser.add_argument("--eval-size", type=float, default=0.1)
+    parser.add_argument("--test-size", type=float, default=0.1)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--logging-steps", type=int, default=10)
     parser.add_argument("--eval-steps", type=int, default=25)
@@ -65,7 +67,7 @@ def parse_args():
     parser.add_argument("--max-eval-samples", type=int, default=None)
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--push-to-hub", action="store_true")
-    parser.add_argument("--hf-repo-id", default=DEFAULT_HF_REPO_ID)
+    parser.add_argument("--hf-repo-id", default=None, help="New model repository for explicitly requested upload")
     parser.add_argument("--max-new-tokens", type=int, default=220)
     return parser.parse_args()
 
@@ -129,10 +131,15 @@ def save_normalized_dataset(rows, path):
 
 
 def prepare_datasets(rows, args, run_dir):
-    dataset = Dataset.from_list(rows)
-    split = dataset.train_test_split(test_size=args.eval_size, seed=args.seed)
-    train_ds = split["train"]
-    eval_ds = split["test"]
+    train_rows, eval_rows, test_rows = split_rows(
+        rows, seed=args.seed, eval_fraction=args.eval_size, test_fraction=args.test_size
+    )
+    # These local files contain logs and must be protected like the input dataset.
+    save_normalized_dataset(train_rows, run_dir / "train.jsonl")
+    save_normalized_dataset(eval_rows, run_dir / "validation.jsonl")
+    save_normalized_dataset(test_rows, run_dir / "test.jsonl")
+    train_ds = Dataset.from_list(train_rows)
+    eval_ds = Dataset.from_list(eval_rows)
 
     if args.max_train_samples:
         train_ds = train_ds.select(range(min(args.max_train_samples, len(train_ds))))
@@ -149,9 +156,12 @@ def prepare_datasets(rows, args, run_dir):
         "train_rows": len(train_ds),
         "eval_rows": len(eval_ds),
         "eval_size": args.eval_size,
+        "test_rows": len(test_rows),
+        "test_size": args.test_size,
+        "dataset_sha256": dataset_fingerprint(rows),
     }
     write_json(run_dir / "dataset_split.json", split_stats)
-    return train_ds, eval_ds
+    return train_ds, eval_ds, eval_rows
 
 
 def latest_checkpoint(output_dir):
@@ -373,6 +383,8 @@ This is a learning-grade fine-tune. Validate outputs manually before using them 
 
 def main():
     args = parse_args()
+    if args.push_to_hub and (not args.hf_repo_id or args.hf_repo_id == DEFAULT_HF_REPO_ID):
+        raise ValueError("--push-to-hub requires a new --hf-repo-id; the existing adapter is protected")
     run_id, run_dir = build_run_paths(args)
     log_path = configure_logging(run_dir)
     logging.info("Starting LogSage run %s", run_id)
@@ -386,15 +398,14 @@ def main():
     rows = load_and_validate_jsonl(args.data_path)
     stats = dataset_stats(rows)
     write_json(run_dir / "dataset_stats.json", stats)
-    save_normalized_dataset(rows, run_dir / "normalized_dataset.jsonl")
     logging.info("Validated %s rows", stats["rows"])
 
-    train_ds, eval_ds = prepare_datasets(rows, args, run_dir)
+    train_ds, eval_ds, eval_rows = prepare_datasets(rows, args, run_dir)
     logging.info("Train rows: %s; eval rows: %s", len(train_ds), len(eval_ds))
 
     if not torch.cuda.is_available():
         raise RuntimeError(
-            "CUDA GPU is required for Unsloth training. Run this on the planned EC2 GPU instance."
+            "CUDA GPU is required for Unsloth training."
         )
 
     # Unsloth must be imported before TRL/Transformers training classes.
@@ -480,7 +491,7 @@ def main():
     tokenizer.save_pretrained(args.output_dir)
     logging.info("Saved adapter and tokenizer to %s", args.output_dir)
 
-    eval_path = run_sample_eval(model, tokenizer, rows, run_dir, args.max_new_tokens)
+    eval_path = run_sample_eval(model, tokenizer, eval_rows, run_dir, args.max_new_tokens)
     report_path = write_training_report(args, run_dir, stats, final_metrics, eval_path, env)
     model_card_path = build_model_card(args, run_dir, stats, final_metrics)
     shutil.copyfile(model_card_path, Path(args.output_dir) / "README.md")
