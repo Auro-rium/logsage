@@ -13,7 +13,7 @@ This workflow uses a manually provisioned, on-demand NVIDIA GPU. The previous tr
 
 1. In the Vultr console, create an NVIDIA Cloud GPU instance in the agreed region. Select a GPU with sufficient VRAM, disk space for the base model, checkpoints, data, and virtual environment, and add the SSH key during provisioning. Record the instance ID and creation time.
 2. Connect over SSH and check `nvidia-smi`, free disk space, Python, and access to the dataset and artifact destination. Verify the installed CUDA/driver stack is compatible with the selected dependencies.
-3. Clone the repository and check out the intended release or commit. Create a virtual environment and install the versioned dependencies for that release.
+3. Clone the repository and check out the intended release or commit. Create a virtual environment and install the project dependencies and record the resolved versions for the run. GPU training dependencies are not yet pinned.
 4. Copy the approved dataset to the server over an encrypted channel. Validate it and create the training, validation, and held-out test splits using the release's documented commands. Keep test data out of training and model selection.
 5. Authenticate to Hugging Face on the instance using the supported login command. Confirm read access to the base model and write access to a **new** destination before training. Do not put credentials in command history or artifacts.
 

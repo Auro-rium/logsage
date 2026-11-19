@@ -36,7 +36,7 @@ if [[ -e "$output_dir" || -e "$run_dir" ]]; then
   exit 2
 fi
 
-python scripts/validate_dataset.py --data-path "$dataset"
+python -m scripts.validate_dataset --data-path "$dataset"
 
 args=(
   --data-path "$dataset"

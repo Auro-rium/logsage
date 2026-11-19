@@ -336,3 +336,33 @@ model = PeftModel.from_pretrained(model, adapter)
 ## 📄 License
 
 This project is for educational and research purposes.
+
+## Vultr training and inference upgrade
+
+The manual GPU lifecycle and cost controls are described in [the Vultr runbook](docs/VULTR_RUNBOOK.md). Supply a JSONL dataset with the same `instruction`, `input`, and `output` schema as the existing dataset. Training writes normalized data and split files to the run directory; treat those files and generated samples as sensitive.
+
+```bash
+python -m src.train --data-path /path/to/approved.jsonl --run-id experiment-001 \
+  --output-dir adapters/experiment-001
+```
+
+The run creates deterministic train, validation, and test files. Exact input duplicates, ignoring whitespace, stay in the same split; near-duplicates still need a separate data review. Compare adapters on the untouched test set with two separate GPU processes:
+
+```bash
+python -m src.evaluate --data-path runs/experiment-001/test.jsonl \
+  --adapter auro-rirum/LogSage-Qwen2.5-7B-QLoRA-v0 --output baseline.json
+python -m src.evaluate --data-path runs/experiment-001/test.jsonl \
+  --adapter adapters/experiment-001 --output candidate.json
+```
+
+Reports include a dataset fingerprint, output validity, severity accuracy and per-severity recall. Human review is needed to assess diagnostic quality. Confidence is generated text, not a calibrated probability.
+
+To serve a loaded adapter on a GPU machine, install the main dependencies and `requirements-server.txt`, set `LOGSAGE_ADAPTER` to the adapter path or model ID and `LOGSAGE_API_KEY` to a secret, and run:
+
+```bash
+uvicorn src.server:app --host 127.0.0.1 --port 8000
+curl -sS -H "Authorization: Bearer $LOGSAGE_API_KEY" -H 'Content-Type: application/json' \
+  -d '{"logs":"database connection timed out"}' http://127.0.0.1:8000/v1/analyze
+```
+
+The API must be accessed through an SSH tunnel or a TLS-terminating proxy. The server loads the model once at startup and serializes inference requests. This implementation has not yet been validated on Vultr with a real GPU or the new dataset.
